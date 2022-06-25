@@ -22,9 +22,25 @@ namespace TasksFEE
             Tasks.Add(t);
         }
 
+        public void DispatchWithAction(PeriodicTask task, Action<PeriodicTask> action)
+        {
+            var t = task.Clone();
+            t.Dispatch();
+            action(t);
+            Tasks.Add(t);
+            
+
+        }
+
         public void Drop()
         {
             Tasks.RemoveAt(0);
+        }
+
+        public void RemoveTask(PeriodicTask task)
+        {
+            if(Tasks.Contains(task))
+                Tasks.Remove(task);
         }
     }
 }

@@ -28,12 +28,13 @@ namespace TasksFEE
         public int TimeDispatched { get; set; }
         public int TimesExecuted { get; set; }
         public int TimeCompleted { get; set; }
-        public int TTD => Period - (_time.Time - TimeCreated);
+        public int TTD => (Period + TimeCreated) - _time.Time;
+        public int Deadline { get; set; }
         public bool IsDispatched { get; set; }
 
         // Oscilators
         public int ResponseTime { get; set; }
-        public int PeriodOsc => (_time.Time - TimeCreated) % Period;
+        public int PeriodOsc => (_time.Time - TimeDispatched) % Period;
 
         // Lock
         public int Lock => _lock;
@@ -45,6 +46,7 @@ namespace TasksFEE
             ExecutionTime = executionTime;
             _time = time;
             TimeCreated = _time.Time;
+            Deadline = TimeCreated + Period;
             ResetTask();
         }
 
@@ -89,9 +91,15 @@ namespace TasksFEE
             }
         }
 
+        public void Drop()
+        {
+            IsCompleted = true;
+            _lock = 1;
+        }
+
         public PeriodicTask Clone()
         {
-            return (PeriodicTask)MemberwiseClone();
+            return new PeriodicTask(UID, Period, ExecutionTime, ref _time);
         }
     }
 }

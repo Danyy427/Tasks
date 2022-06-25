@@ -16,6 +16,20 @@ namespace TasksFEE
             rms.AddTask(3, 7, 2);
             rms.AddTask(4, 8, 2);
             rms.CreateSchedule();
+
+            EDF edf = new EDF();
+            edf.AddTask(1, 5, 2);
+            edf.AddTask(2, 6, 2);
+            edf.AddTask(3, 7, 2);
+            edf.AddTask(4, 8, 2);
+            edf.CreateSchedule();
+
+            LLF llf = new LLF();
+            llf.AddTask(1, 5, 2);
+            llf.AddTask(2, 6, 2);
+            llf.AddTask(3, 7, 2);
+            llf.AddTask(4, 8, 2);
+            llf.CreateSchedule();
         }
     }
 }
