@@ -21,9 +21,9 @@ namespace TasksFEE
     {
         public List<PeriodicTask> Tasks { get; set; }
         public List<PeriodicTask> CompletedTasks { get; set; }
-
         public List<TimeSlice> Slices { get; set; }
         public TaskQueue TQueue { get; set; }
+        public List<TaskMetrics> Metrics { get; set; }
         public GlobalTime GTime;
 
         public Schedule()
@@ -32,12 +32,14 @@ namespace TasksFEE
             CompletedTasks = new List<PeriodicTask>();
             Slices = new List<TimeSlice>();
             TQueue = new TaskQueue();
+            Metrics = new List<TaskMetrics>();
             GTime = new GlobalTime();
         }
 
         public void AddTask(int uID, int period, int executionTime)
         {
             Tasks.Add(new PeriodicTask(uID, period, executionTime, ref GTime));
+            Metrics.Add(new TaskMetrics(uID));
         }
 
         public void Tick()
@@ -61,6 +63,11 @@ namespace TasksFEE
                 {
                     TQueue.Dispatch(x);
                 }
+                else if(GTime.Time % x.Period == 0)
+                {
+                    var metric = Metrics.Single(y => y.UID == x.UID);
+                    metric.TasksDropped += x.ExecutionTime;
+                }
             });
 
             TQueue.Tasks.ForEach(action);
@@ -79,6 +86,13 @@ namespace TasksFEE
                 task.Execute();
                 if(task.IsCompleted && task.Lock == 1)
                 {
+                    var metric = Metrics.Single(x => x.UID == task.UID);
+                    metric.ResponseTimeCounter++;
+                    metric.ResponseTimeSum += task.ResponseTime;
+                    metric.Penalty += task.Penalty;
+                    metric.Reward += task.Reward;
+                    metric.TimesExecuted += task.TimesExecuted;
+
                     CompletedTasks.Add(task);
                     TQueue.Tasks.Remove(task);
                 }
@@ -89,12 +103,6 @@ namespace TasksFEE
             }
             Slices.Add(new TimeSlice(task, GTime.Time));
         }
-
-        public void Drop()
-        {
-            TQueue.Drop();
-        }
-
 
         public void IOSchedule(string filename)
         {
@@ -138,6 +146,17 @@ namespace TasksFEE
                 TUtilization += (double)task.ExecutionTime / (double)task.Period;
             }
             File.AppendAllText(filename, $"For the given tasks the total CPU Utilization is {TUtilization * 100}%{Util.nwl}");
+        }
+
+        public void IOTaskMetrics(string filename)
+        {
+            File.AppendAllText(filename, $"{Util.nwl}{Util.sp} Task Metrics {Util.sp}{Util.nwl}");
+            foreach (var task in Tasks)
+            {
+                var metric = Metrics.Single(x => x.UID == task.UID);
+                File.AppendAllText(filename, $"The task {metric.UID} has been executed {metric.TimesExecuted} times, has a total penalty of {metric.Penalty}, a total reward of {metric.Reward}, an average response time of {metric.AverageResponseTime}, and in total it has been dropped for {metric.TasksDropped} time slices{Util.nwl}");
+            }
+            File.AppendAllText(filename, $"The system of length {Metrics.Sum(x => x.TimesExecuted)} has a total penalty of {Metrics.Sum(x => x.Penalty)}, a total reward of {Metrics.Sum(x => x.Reward)}, an average response time of {Metrics.Sum(x => x.AverageResponseTime) /(double)Metrics.Count}, and in total {Metrics.Sum(x => x.TasksDropped)} time slices of tasks has been dropped{Util.nwl}");
         }
     }
 }

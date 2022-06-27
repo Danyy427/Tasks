@@ -46,6 +46,9 @@ namespace TasksFEE
 
             // Output the schedule 
             TSchedule.IOSchedule(output);
+
+            // Output the metrics
+            TSchedule.IOTaskMetrics(output);
         }
     }
 }

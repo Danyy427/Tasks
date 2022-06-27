@@ -28,13 +28,6 @@ namespace TasksFEE
             t.Dispatch();
             action(t);
             Tasks.Add(t);
-            
-
-        }
-
-        public void Drop()
-        {
-            Tasks.RemoveAt(0);
         }
 
         public void RemoveTask(PeriodicTask task)

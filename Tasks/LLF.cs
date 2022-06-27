@@ -36,6 +36,8 @@ namespace TasksFEE
                     if (x.Priority < 0)
                     {
                         x.Drop();
+                        var metric = TSchedule.Metrics.Single(y => y.UID == x.UID);
+                        metric.TasksDropped += x.DroppedCount;
                         TSchedule.CompletedTasks.Add(x);
                     }
                 });
@@ -51,6 +53,9 @@ namespace TasksFEE
 
             // Output the schedule 
             TSchedule.IOSchedule(output);
+
+            // Output the metrics
+            TSchedule.IOTaskMetrics(output);
         }
     }
 }

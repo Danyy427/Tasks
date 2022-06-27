@@ -25,12 +25,14 @@ namespace TasksFEE
         public bool IsCompleted { get; set; }
         public int Priority { get; set; }
         public int Penalty { get; set; }
+        public int Reward { get; set; }
         public int TimeDispatched { get; set; }
         public int TimesExecuted { get; set; }
         public int TimeCompleted { get; set; }
-        public int TTD => (Period + TimeCreated) - _time.Time;
+        public int TTD => (Period + TimeDispatched) - _time.Time;
         public int Deadline { get; set; }
         public bool IsDispatched { get; set; }
+        public int DroppedCount { get; set; }
 
         // Oscilators
         public int ResponseTime { get; set; }
@@ -46,7 +48,7 @@ namespace TasksFEE
             ExecutionTime = executionTime;
             _time = time;
             TimeCreated = _time.Time;
-            Deadline = TimeCreated + Period;
+            Deadline = TimeDispatched + Period;
             ResetTask();
         }
 
@@ -55,10 +57,11 @@ namespace TasksFEE
             if (_lock == 1) throw new Exception("The task is done and therefore locked");
             _lock = 0;
 
+            Penalty = 0;
+            Reward = 0;
             RemainingTime = 0;
             IsCompleted = false;
             Priority = 0;
-            Penalty = 0;
             TimeDispatched = 0;
             TimesExecuted = 0;
             TimeCompleted = 0;
@@ -86,13 +89,16 @@ namespace TasksFEE
             {
                 TimeCompleted = _time.Time;
                 IsCompleted = true;
-                ResponseTime = _time.Time - TimeCreated;
+                ResponseTime = TimeCompleted - TimeDispatched;
+                Penalty = ResponseTime - Period > 0? ResponseTime - Period : 0;
+                Reward = Period - ResponseTime> 0 ? Period - ResponseTime : 0;
                 _lock = 1;
             }
         }
 
         public void Drop()
         {
+            DroppedCount = RemainingTime;
             IsCompleted = true;
             _lock = 1;
         }
